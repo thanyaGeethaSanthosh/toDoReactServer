@@ -1,49 +1,39 @@
 const express = require('express');
+const Storage = require('./Storage');
+
 const app = express();
-let toDos = require('./todo.json');
-let Title = 'TODO';
-let currID = toDos.length;
-const { nextState, defaultState } = require('./TaskStatus');
+
+const storage = Storage.createClient();
 
 app.use(express.json());
 app.get('/api/fetchAllToDos', function (req, res) {
-  res.send(JSON.stringify({ title: Title, tasks: toDos }));
+  storage
+    .getToDo()
+    .then(({ title, tasks }) => res.send(JSON.stringify({ title, tasks })));
 });
 
 app.post('/api/addTask', function (req, res) {
   const { task } = req.body;
-  currID += 1;
-  toDos.push({ description: task, state: defaultState(), id: currID });
-  //write to json file
-  res.send(JSON.stringify({ title: Title, tasks: toDos }));
+  storage.addTask(task).then((reply) => res.json({ successful: true }));
 });
 
 app.post('/api/deleteTask', function (req, res) {
   const { taskId } = req.body;
-  toDos.splice(taskId, 1);
-  //write to json file
-  res.send(JSON.stringify({ title: Title, tasks: toDos }));
+  storage.deleteTask(taskId).then((reply) => res.json({ successful: true }));
 });
 
 app.post('/api/toggleTaskStatus', function (req, res) {
   const { taskId } = req.body;
-  toDos[taskId].state = nextState(toDos[taskId].state);
-  //write to json file
-  res.send(JSON.stringify({ title: Title, tasks: toDos }));
+  storage.toggleStatus(taskId).then((reply) => res.json({ successful: true }));
 });
 
 app.post('/api/setTitle', function (req, res) {
   const { title } = req.body;
-  Title = title;
-  //write to json file
-  res.send(JSON.stringify({ title: Title, tasks: toDos }));
+  storage.setTitle(title).then((reply) => res.json({ successful: true }));
 });
 
 app.post('/api/resetTodo', function (req, res) {
-  toDos = [];
-  Title = 'TODO';
-  //write to json file
-  res.send(JSON.stringify({ title: Title, tasks: toDos }));
+  storage.reset().then((reply) => res.json({ successful: true }));
 });
 
 app.listen(3030, () => console.log('listening to 3030'));
